@@ -18,5 +18,5 @@
 #
 # The restart condition of "none" prevents the manager from restarting the
 # workers after they are done.
-docker service create --restart-condition "none" --replicas 10 --name MyMR_Map --constraint 'node.hostname != asg-ubuntu-vm' -t --network MyMR_Network 129.59.107.155:5000/vu_mr_map python /root/mr_mapworker.py 129.59.107.155 5556
-docker service create --restart-condition "none" --replicas 3 --name MyMR_Reduce --constraint 'node.hostname != asg-ubuntu-vm' -t --network MyMR_Network 129.59.107.155:5000/vu_mr_reduce python /root/mr_reduceworker.py 129.59.107.155 5556
+docker service create --restart-condition "none" --replicas 10 --name MyMR_Map --constraint 'node.hostname != team23-1' -t --network MyMR_Network mr_map python3 /root/mr_mapworker.py 10.212.96.70 5556
+docker service create --restart-condition "none" --replicas 3 --name MyMR_Reduce --constraint 'node.hostname != team23-1' -t --network MyMR_Network mr_reduce python3 /root/mr_reduceworker.py 10.212.96.70 5556

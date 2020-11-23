@@ -21,4 +21,4 @@
 # master. All of these are mapped using the -p option.
 #
 # This assumes that we have already created a swarm-wide network
-docker service create --replicas 1 --name MyMR_Master --constraint 'node.hostname == asg-ubuntu-vm' -t --network MyMR_Network -p 5556:5556 -p 5557:5557 -p 5558:5558 -p 5559:5559 -p 5560:5560 129.59.107.155:5000/vu_mr_master /bin/bash
+docker service create --replicas 1 --name MyMR_Master --constraint 'node.hostname == team23-1' -t --network MyMR_Network -p 5556:5556 -p 5557:5557 -p 5558:5558 -p 5559:5559 -p 5560:5560 mr_master /bin/bash
