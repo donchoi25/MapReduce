@@ -36,7 +36,7 @@ import argparse   # argument parser
 #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 
 # ------------------------------------------------
-# Main map worker class        
+# Main map worker class
 class MR_Map ():
     """ The map worker class """
     def __init__ (self, args):
@@ -63,7 +63,7 @@ class MR_Map ():
         connect_addr = "tcp://"+ self.master_ip + ":" + str (self.master_port)
         print("Using PULL, map worker connecting to ", connect_addr)
         self.receiver.connect (connect_addr)
-        
+
         # As part of the initialization, we tell the master that we are up.
         # This information is to be pushed to the master at a port which is
         # 2 more than the base of the master.
@@ -86,7 +86,7 @@ class MR_Map ():
         # to the map results barrier
         #
         # Note that the port number of the maps result barrier is 3 more than
-        # the port of the master. Initialize it so we can send results 
+        # the port of the master. Initialize it so we can send results
         self.results_sender = context.socket (zmq.PUSH)
         self.results_sender.setsockopt (zmq.LINGER, -1)
         self.results_sender.setsockopt (zmq.SNDHWM, 0)
@@ -96,7 +96,6 @@ class MR_Map ():
         #bind_addr = "tcp://" + self.master_ip + ":" + str (self.master_port+3)
         #print "Using PUSH, map worker binding to map results barrier at ", bind_addr
         #self.results_sender.bind (bind_addr)
-        
 
 
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
@@ -115,11 +114,11 @@ class MR_Map ():
         # process it
         json_obj = self.receiver.recv_json()
         print("map received json message")
-        
+
         # now parse the json object and do the work
         self.id = json_obj['id']
         rows = json_obj['content']
-        
+
         print("do_work: map worker received id: ", self.id)
 
         # intermediate keys and values are stored in this array
@@ -127,9 +126,9 @@ class MR_Map ():
 
         # need to find all rows with same smart plug
         for row in rows:
-	    print(row)
-            token_list = [row[plug_id], row[household_id], row[house_id]]
-            intmed_key_val_list.append ({'token': token_list, 'val': row[value]})
+            tokens = str(row['doc']['plug_id']) + "-" + str(row['doc']['household_id']) + "-" + str(row['doc']['house_id'])
+           # token_list = [row['doc']['plug_id'], row['doc']['household_id'], row['doc']['house_id']]
+            intmed_key_val_list.append ({'token': tokens, 'val': row['doc']['value']})
 
         # now we send the results of the map phase to the master
         # The message is a json msg
@@ -137,7 +136,7 @@ class MR_Map ():
 
         # close the socket
         # self.results_sender.close ()
-        
+
         print("map worker with ID: ", self.id, " work is performed")
 
 ##################################
@@ -155,7 +154,7 @@ def parseCmdLineArgs ():
     args = parser.parse_args ()
 
     return args
-    
+
 #--------------------------------------------------------------------
 # main function
 def main ():
@@ -165,20 +164,19 @@ def main ():
 
     # first parse the command line arguments
     parsed_args = parseCmdLineArgs ()
-    
+
     # instantiate a map object with the parsed args
     mapobj = MR_Map (parsed_args)
 
     # initialize the map worker network connections
     mapobj.init_worker ()
-    
+
     # invoke the map process. We run this map process forever
     while True:
         mapobj.do_work ()
         print("MapReduce Map Worker done for this iteration")
         time.sleep (5)
-        
-    
+
 #----------------------------------------------
 if __name__ == '__main__':
     main ()

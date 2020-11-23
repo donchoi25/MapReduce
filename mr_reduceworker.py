@@ -13,7 +13,7 @@
 # Modified: Nov 2017 so it works inside a Docker container
 # and unlike the mininet approach, does not exploit the fact that
 # filesystem on all hosts is the same.
-# 
+#
 #
 
 import os
@@ -37,7 +37,7 @@ import argparse   # argument parser
 #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 
 # ------------------------------------------------
-# Main reduce worker class        
+# Main reduce worker class
 class MR_Reduce ():
     """ The reduce worker class """
     def __init__ (self, args):
@@ -63,7 +63,7 @@ class MR_Reduce ():
 
         print("Using PULL, reduce worker connecting to ", connect_addr)
         self.receiver.connect (connect_addr)
-        
+
         # As part of the initialization, we tell the master that we are up.
         # This information is to be pushed to the master at a port which is
         # 2 more than the base of the master.
@@ -87,7 +87,7 @@ class MR_Reduce ():
         # to the reduce results barrier
         #
         # Note that the port number of the reduce result barrier is 4 more than
-        # the port of the master. Initialize it so we can send results 
+        # the port of the master. Initialize it so we can send results
         self.results_sender = context.socket (zmq.PUSH)
         self.results_sender.setsockopt (zmq.LINGER, -1)
         self.results_sender.setsockopt (zmq.SNDHWM, 0)
@@ -98,7 +98,7 @@ class MR_Reduce ():
         #bind_addr = "tcp://" + self.master_ip + ":" + str (self.master_port+4)
         #print "Using PUSH, reduce worker binding to results results barrier at ", bind_addr
         #self.results_sender.bind (bind_addr)
-        
+
 
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     # @NOTE@: changes will be needed here for the Assignment
@@ -117,18 +117,19 @@ class MR_Reduce ():
 
         # final results for this worker are stored in this
         key_val_list = []
-        
+
         # our contents will be a list of list. Each internal list could have
         # one or more entries for a given unique word
         for items in content:
             sum = 0
             for i in range(len(items)):
                 sum = sum + items[i][1]
+            average = sum / len(items)
 
             # The [0]'th entry of each of the entries of the second level
             # list is the unique word. We just use the first one and dump it
             # into our list
-            key_val_list.append ({'token': items[0][0], 'val': sum}) 
+            key_val_list.append ({'token': items[0][0], 'val': average})
 
 
         # trigger the reduce barrier by sending the results back
@@ -156,7 +157,7 @@ def parseCmdLineArgs ():
     args = parser.parse_args ()
 
     return args
-    
+
 #-----------------------------------------------------------------------
 # main function
 def main ():
@@ -164,13 +165,13 @@ def main ():
 
     print("MapReduce Reduce Worker program")
     parsed_args = parseCmdLineArgs ()
-    
+
     # invoke the reducer logic
     reduceobj = MR_Reduce (parsed_args)
 
     # initialize the reduce worker network connections
     reduceobj.init_worker ()
-    
+
     # invoke the reduce process. We run this reduce process forever
     while True:
         reduceobj.do_work ()

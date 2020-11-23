@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#
+#  
 # Purpose: MapReduce Framework for Wordcount (not yet a generic framework)
 #
 # Vanderbilt University Computer Science
@@ -10,7 +10,7 @@
 #
 # It can still be used with Mininet; in fact now it actually
 # sends data over the network and will thus showcase real performance
-# results
+# results 
 #
 #
 
@@ -20,7 +20,8 @@ import sys
 import time
 
 import re                    # regular expression
-import csv                   # deal with CSV files
+import 
+csv                   # deal with CSV files
 import operator              # used in itertools
 import itertools             # nice iterators
 
@@ -64,12 +65,12 @@ def barrier_sink (args):
         # of map or reduce responses are received, the thread terminates
         # doing any processing that is needed (e.g., saving the data in
         # a file for results from map and reduce phases).
-
+        
         print("Barrier sink thread starting with args: ", args)
         receiver = args['receiver']
 
         # The logic here is that we wait until the required number of
-        # ACKs are received
+        # ACKs are received 
         i = 0
         while (i < args['cond']):
             # wait until all responses received from workers. For different
@@ -80,7 +81,7 @@ def barrier_sink (args):
                 # are up. We just receive that byte and ignore it but make
                 # a note of the count
                 s = receiver.recv ()
-
+                
             elif (args['op'] == "map_results"):
                 # when a map worker completes its job, it is going to send
                 # us the stream of intermediate keys and the value. We are
@@ -101,10 +102,10 @@ def barrier_sink (args):
 
                 # write all the entries into the csv file
                 for j in range (len(map_resp)):
-                    map_file.write (str(map_resp[j]['token']) + str (",") + str(map_resp[j]['val']) + "\n")
+                    map_file.write (map_resp[j]['token'] + str (",") + str(map_resp[j]['val']) + "\n")
                 # close the file
                 map_file.close ()
-
+                
             elif (args['op'] == "reduce_results"):
                 # results from the reduce phase are also in json format
                 reduce_resp = receiver.recv_json ()
@@ -115,7 +116,7 @@ def barrier_sink (args):
                 # write the csv entries to the file.
                 for j in range (len(reduce_resp)):
                     reduce_file.write (reduce_resp[j]['token'] + str (",") + str(reduce_resp[j]['val']) + "\n")
-
+                    
                 # close the file
                 reduce_file.close ()
 
@@ -130,12 +131,12 @@ def barrier_sink (args):
 
         print("Barrier received required number of ACKS = ", args['cond'])
         return
-
+    
     except:
         print("Unexpected error in barrier thread: ", sys.exc_info()[0])
 
 # ------------------------------------------------
-# The master for map-reduce. We capture its features in a class
+# The master for map-reduce. We capture its features in a class 
 #
 class MR_Framework ():
     """ The map reduce orchestrator class """
@@ -164,11 +165,11 @@ class MR_Framework ():
         self.rcv4barrier = None               # used to receive worker up signals
         self.rcv4map_res = None               # used to receive map results
         self.rcv4reduce_res = None            # used to receive reduce results
-
+        
         # for the map and reduce barrier threads (to ensure the workers
         # are up or they have produced result), we maintain a thread object
-        self.thr_obj_dict = {'workers_up': None, 'map_results': None, 'reduce_results': None}
-
+        self.thr_obj_dict = {'workers_up': None, 'map_results': None, 'reduce_results': None}  
+        
     # -----------------------------------------------------------------------
     # Initialize the network connections and the barriers
     def init_server (self):
@@ -249,9 +250,9 @@ class MR_Framework ():
         """reset data structures"""
         self.uniquekeys = []
         self.groups = []
-
+        
     # -----------------------------------------------------------------------
-    # Create the barrier sink (either for map or reduce) as a separate process
+    # Create the barrier sink (either for map or reduce) as a separate process 
     # or thread. We are using the thread approach as it is easier.
     def start_barrier_sink (self, op):
         """Start a barrier thread to ensure all expected replies are received"""
@@ -294,7 +295,7 @@ class MR_Framework ():
 
             # create the args to send to the thread
             args = {'op': op, 'port': port, 'cond': barrier_cond, 'receiver': receiver}
-
+            
             # instantiate a thread obj and start the thread
             print("MR::solve - start_barrier_sink with args: ", args)
             self.thr_obj_dict[op] = MR_Thread (barrier_sink, args)
@@ -333,7 +334,7 @@ class MR_Framework ():
             # find number of rows to send to map workers
             rows_per_map = int (round (num_rows/self.M))
             print("number of rows = ", num_rows, ", rows per map = ", rows_per_map)
-
+        
             print(("MR::solve - master sending args to {} map workers:".format(self.M)))
             for i in range (self.M):
 
@@ -344,12 +345,14 @@ class MR_Framework ():
                 content = []
                 if (i == self.M-1):
                     stop = num_rows
-
+                    
                 for j in range(start, stop):
                     content.append(rows[j])
 
                 # create the argument to send to the task
+                size = stop - start
                 map_arg = {'id': i,
+                           'size': size,
                            'content': content}
 
                 # now send this and one of the map tasks will receive it
@@ -357,7 +360,7 @@ class MR_Framework ():
                 self.sender4map.send_json (map_arg)
 
             print(("MR::solve - master done sending args to {} map workers:".format(self.M)))
-
+            
         except:
             print("Unexpected error in distribute_map_tasks:", sys.exc_info()[0])
             raise
@@ -392,9 +395,9 @@ class MR_Framework ():
 
                 # send the contents to the reducer
                 self.sender4reduce.send_json (contents)
-
+        
             print(("MR::solve - master done sending args to {} reduce workers:".format(self.R)))
-
+            
         except:
             print("Unexpected error in distribute_reduce_tasks:", sys.exc_info()[0])
             raise
@@ -427,42 +430,41 @@ class MR_Framework ():
         # Since we are doing wordcount, which is an addition operation
         # we are doing combiner optimizations for per-map job
         tempfile = open ("temp.csv", "w")
-
+        
         # for each csv file generated in the map phase, we sort the keys.
         # Note that the map csv files are numbered Map0.csv, Map1.csv, ...
         for i in range (self.M):
             # open the CVS file created by map job
             csvfile = csv.reader (open ("Map"+str(i)+".csv", "r"), delimiter=",")
-
-            for j, row in enumerate(csvfile):
-                tempfile.write(str(row[0]) + "," + str(row[1]) + "\n")
-
+            
             # get the sorted list of entries from our csv file using
             # column 1 (0-based indexing) as the key to sort on
             # and we use traditional alphabetic order
-#            wordlist = sorted (csvfile, key=operator.itemgetter (0))
+            wordlist = sorted (csvfile, key=operator.itemgetter (0))
 
             # Now group all entries by the unique identified words and perform
             # local combiner optimization (because it is addition, which is
             # commutative and associative). Note, again that we do not do all
             # the reduction here itself but leave it to the reduce tasks.
-#            groups = []
-#            uniquekeys = []
-#            for k, g in itertools.groupby (wordlist, key=operator.itemgetter (0)):
-#                groups.append (list (g))
-#                uniquekeys.append (k)
+            groups = []
+            uniquekeys = []
+            for k, g in itertools.groupby (wordlist, key=operator.itemgetter (0)):
+                groups.append (list (g))
+                uniquekeys.append (k)
 
             # now for each unique key, create the data to be sent to
             # the reducers
-#            for j in range (len (uniquekeys)):
-#                tempfile.write (uniquekeys[j] + ", ")
-#                val = 0
-#                for k in range (len(groups[j])):
-#                    val = val + float(groups[j][k][1])
-#                tempfile.write (str (val) + "\n")
+            for j in range (len (uniquekeys)):
+                tempfile.write (uniquekeys[j] + ", ")
+                # note that for each unique word, we have a grouped
+                # list, and each value is 1. So the length of the
+                # sublist is the sum, which represents the combiner
+                # optimization reduction for that unique key.
+                # We save that info
+                tempfile.write (str (len (groups[j])) + "\n")
 
             # Delete the intermediate Map file (no need for it anymore)
-#            os.remove ("Map"+str(i)+".csv")
+            os.remove ("Map"+str(i)+".csv")
 
         # close the temp file
         tempfile.close ()
@@ -474,13 +476,13 @@ class MR_Framework ():
 
         # We need the following because otherwise the csv treats everything
         # as text and so our numbers are getting converted to strings
-        rows = [[row[0], float(row[1])] for row in csvfile]
-#        print(rows)
+        rows = [[row[0], int(row[1])] for row in csvfile]
+        
         # get the sorted list of entries from our csv file using
         # column 1 (0-based indexing used here) as the key to sort on
-        # and we use traditional alphabetic order.
+        # and we use traditional alphabetic order.  
         wordlist = sorted (rows, key=operator.itemgetter (0))
-#        print(wordlist)
+        
         # Identify the total number of unique keys we have in our data
         # We need this info to make a split in the Shuffle file to hand out
         # to reduce tasks. We create as many intermediate shuffle files
@@ -516,7 +518,8 @@ class MR_Framework ():
             shufflefile.close ()
 
         # cleanup the temp file
-       # os.remove ("temp.csv")
+        os.remove ("temp.csv")
+        
 
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     # @NOTE@: changes may not be needed here for the Assignment
@@ -545,7 +548,7 @@ class MR_Framework ():
             data = reduce_file.read ()
             reduce_file.close ()
             results.write (data)
-
+            
         results.close ()
 
         # cleanup. Delete all reducer related files
@@ -571,10 +574,10 @@ class MR_Framework ():
             ############  the real work starts now ###########
 
             print ("****** Next iteration of map-reduce ************")
-
+            
             # we keep track of the total running time
             total_running_time = 0
-
+            
             ########### Phase 1: Map ###################
 
             print("***** Starting Map Phase ***********")
@@ -585,11 +588,11 @@ class MR_Framework ():
             # each map worker has completed its work.
             print("MR::solve - start map results barrier")
             self.start_barrier_sink ("map_results")
-
+            
             ### distribute tasks to all map workers ###
             print("MR::solve - send message to map workers")
             self.distribute_map_tasks ()
-
+            
             ### barrier ###
             print("MR::solve - wait for map sink to return")
             self.thr_obj_dict["map_results"].join ()
@@ -598,7 +601,7 @@ class MR_Framework ():
             # using the simpler thread-based approach
             #retcode = handle.wait ()
             #print "MR::solve - barrier returned with status: ", retcode
-
+            
             # stop the timing measurement
             end_time = time.time ()
 
@@ -613,71 +616,71 @@ class MR_Framework ():
             # place. We do not have any such elaborate mechanism.
 
             # start the timing measurement
-            start_time = time.time ()
-
-            # invoke the shuffle logic
-            print("***** Starting Shuffle Phase ***********")
-            self.shuffle_func ()
-
-            # stop the timing measurement
-            end_time = time.time ()
-
-            shuffle_phase_time = end_time - start_time
-            print("***** Shuffle phase required: ", shuffle_phase_time, " seconds")
-            total_running_time = total_running_time + shuffle_phase_time
-
-            ########### Phase 3: Reduce ###################
-
-            print("***** Starting Reduce Phase ***********")
-            # start the timing measurement
-            start_time = time.time ()
-
-            # start the reduce barrier sink again to receive the ACKs after
-            # each reduce worker has completed its work.
-            print("MR::solve - start reduce barrier")
-            self.start_barrier_sink ("reduce_results")
-
-            ### distribute tasks to all workers ###
-            print("MR::solve - send message to reduce workers")
-            self.distribute_reduce_tasks ()
-
-            ### barrier ###
-            print("MR::solve - wait for reduce sink to return")
-            self.thr_obj_dict["reduce_results"].join ()
-
-            # this part works if we use the process approach
-            #retcode = handle.wait ()
-            #print "MR::solve - barrier returned with status: ", retcode
-
-            # stop the timing measurement
-            end_time = time.time ()
-
-            reduce_phase_time = end_time - start_time
-            print("***** Reduce phase required: ", reduce_phase_time, " seconds")
-            total_running_time = total_running_time + reduce_phase_time
-
-            ########### Phase 4: Finalize ###################
-
-            print("***** Starting Finalize Phase ***********")
-            # start the timing measurement
-            start_time = time.time ()
-
-            # finalize the results
-            self.finalize_func ()
-
-            # stop the timing measurement
-            end_time = time.time ()
-
-            finalize_phase_time = end_time - start_time
-            print("***** Finalize phase required: ", finalize_phase_time, " seconds")
-            total_running_time = total_running_time + finalize_phase_time
-
-            print("*** Total Running Time for wordcount ***  = ",  total_running_time)
-
-            # write this information into the file
-            mf.write (str(map_phase_time) + ", " + str(shuffle_phase_time) + ", " + str(reduce_phase_time) + ", " + str(finalize_phase_time) + ", " + str(total_running_time) + "\n")
-            mf.flush ()
-
+##            start_time = time.time ()
+##
+##            # invoke the shuffle logic
+##            print("***** Starting Shuffle Phase ***********")
+##            self.shuffle_func ()
+##
+##            # stop the timing measurement
+##            end_time = time.time ()
+##
+##            shuffle_phase_time = end_time - start_time
+##            print("***** Shuffle phase required: ", shuffle_phase_time, " seconds")
+##            total_running_time = total_running_time + shuffle_phase_time
+##
+##            ########### Phase 3: Reduce ###################
+##
+##            print("***** Starting Reduce Phase ***********")
+##            # start the timing measurement
+##            start_time = time.time ()
+##
+##            # start the reduce barrier sink again to receive the ACKs after
+##            # each reduce worker has completed its work.
+##            print("MR::solve - start reduce barrier")
+##            self.start_barrier_sink ("reduce_results")
+##            
+##            ### distribute tasks to all workers ###
+##            print("MR::solve - send message to reduce workers")
+##            self.distribute_reduce_tasks ()
+##            
+##            ### barrier ###
+##            print("MR::solve - wait for reduce sink to return")
+##            self.thr_obj_dict["reduce_results"].join ()
+##
+##            # this part works if we use the process approach
+##            #retcode = handle.wait ()
+##            #print "MR::solve - barrier returned with status: ", retcode
+##
+##            # stop the timing measurement
+##            end_time = time.time ()
+##
+##            reduce_phase_time = end_time - start_time
+##            print("***** Reduce phase required: ", reduce_phase_time, " seconds")
+##            total_running_time = total_running_time + reduce_phase_time
+##
+##            ########### Phase 4: Finalize ###################
+##
+##            print("***** Starting Finalize Phase ***********")
+##            # start the timing measurement
+##            start_time = time.time ()
+##
+##            # finalize the results
+##            self.finalize_func ()
+##            
+##            # stop the timing measurement
+##            end_time = time.time ()
+##
+##            finalize_phase_time = end_time - start_time
+##            print("***** Finalize phase required: ", finalize_phase_time, " seconds")
+##            total_running_time = total_running_time + finalize_phase_time
+##
+##            print("*** Total Running Time for wordcount ***  = ",  total_running_time)
+##
+##            # write this information into the file
+##            mf.write (str(map_phase_time) + ", " + str(shuffle_phase_time) + ", " + str(reduce_phase_time) + ", " + str(finalize_phase_time) + ", " + str(total_running_time) + "\n")
+##            mf.flush ()
+            
         except:
             print("Unexpected error in run_iter method:", sys.exc_info()[0])
             raise
@@ -701,7 +704,7 @@ class MR_Framework ():
             # here we start our end of the PUSH based workflow
             print("MR::solve - initialize server")
             self.init_server ()
-
+            
             # start a barrier to make sure the required number of map
             # and reduce workers are up and running
             print("MR::solve - start barrier to make sure all our map and reduce workers are up")
